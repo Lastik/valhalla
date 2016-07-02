@@ -6,7 +6,7 @@ case class Defence(value: Int) {
 
   def calculateWentThroughDamage(damage: Damage): Damage = {
 
-    //The more this coeff is, the more effective is deffence
+    //The more this coeff is, the more effective is defence
     val defenceEfficiencyCoeff = 50.0
 
     damage * (-1.0 / (value / defenceEfficiencyCoeff + 1.0) + 1.0)
