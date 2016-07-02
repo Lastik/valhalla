@@ -5,7 +5,11 @@ import core.model.Damage
 case class Defence(value: Int) {
 
   def calculateWentThroughDamage(damage: Damage): Damage = {
-    damage * (-1.0 / (value / 50.0 + 1.0) + 1.0)
+
+    //The more this coeff is, the more effective is deffence
+    val defenceEfficiencyCoeff = 50.0
+
+    damage * (-1.0 / (value / defenceEfficiencyCoeff + 1.0) + 1.0)
   }
 }
 

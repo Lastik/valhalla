@@ -18,15 +18,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Player(name: String, heroId: HeroId) extends Actor with LookupBusinessActor with DefaultTimeout {
 
   object InternalMessages{
-    case class Tick()
+    case class ScheduleAttacks()
   }
 
   val worldService = lookupByContext(WorldService.Id)
 
-  val tickFrequency = 20 seconds
+  val scheduleAttacksFrequency = 20 seconds
 
-  val tickSchedule = context.system.scheduler.schedule(
-    0 seconds, tickFrequency, self, InternalMessages.Tick())
+  val scheduleAttacksScheduler = context.system.scheduler.schedule(
+    0 seconds, scheduleAttacksFrequency, self, InternalMessages.ScheduleAttacks())
 
   var prevAttackTimeOpt: Option[DateTime] = None
 
@@ -37,13 +37,13 @@ class Player(name: String, heroId: HeroId) extends Actor with LookupBusinessActo
   }
 
   override def receive: Receive = {
-    case InternalMessages.Tick() =>
+    case InternalMessages.ScheduleAttacks() =>
 
       val now = DateTime.now()
 
       val attacksScheduleTimeInterval = TimeInterval(
         start = now,
-        end = now + tickFrequency
+        end = now + scheduleAttacksFrequency
       )
 
       getHeroById(heroId).map{
@@ -54,22 +54,22 @@ class Player(name: String, heroId: HeroId) extends Actor with LookupBusinessActo
 
           val attacksCount = ((attacksScheduleTimeInterval.end - firstAttackTime) / attackFrequency).toInt
 
-          val attackWithTimeList = (0 until attacksCount).map(attackIndex => {
+          val attackWithTimePairs = (0 until attacksCount).map(attackIndex => {
             val attackTime = firstAttackTime + (attackFrequency * attackIndex)
-            AttackWithTime(attackTime, AttackNpc(heroId)(context.system))
+            AttackWithTimePair(attackTime, AttackNpc(heroId)(context.system))
           })
 
-          attackWithTimeList.foreach(attackWithTime =>{
-            worldService ! ScheduleAttack(attackWithTime.time, attackWithTime.attackNpc)
+          attackWithTimePairs.foreach(attackWithTimePair =>{
+            worldService ! ScheduleAttack(attackWithTimePair.time, attackWithTimePair.attackNpc)
           })
 
-          prevAttackTimeOpt = attackWithTimeList.lastOption.map(_.time)
+          prevAttackTimeOpt = attackWithTimePairs.lastOption.map(_.time)
         }
       }
   }
 
   override def postStop() = {
-    tickSchedule.cancel()
+    scheduleAttacksScheduler.cancel()
   }
 
   def getHeroById(heroId: HeroId): Future[Hero] = {
@@ -77,5 +77,5 @@ class Player(name: String, heroId: HeroId) extends Actor with LookupBusinessActo
   }
 }
 
-case class AttackWithTime(time:DateTime, attackNpc: AttackNpc)
+case class AttackWithTimePair(time:DateTime, attackNpc: AttackNpc)
 
