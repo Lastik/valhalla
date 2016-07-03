@@ -32,7 +32,7 @@ class WorldService extends Actor with LookupBusinessActor {
 
   var npcById = Npc.Values.map(npc => (npc.id, npc)).toMap
 
-  var heroes = Hero.Values.map(hero => (hero.id, hero)).toMap
+  var heroById = Hero.Values.map(hero => (hero.id, hero)).toMap
 
   println("Welcome to Valhalla!")
 
@@ -40,7 +40,7 @@ class WorldService extends Actor with LookupBusinessActor {
     case FindAnyAliveNpc() =>
       sender ! npcById.values.find(!_.isDead)
     case GetHeroById(heroId) =>
-      sender ! heroes.getOrElse(heroId, "Can't find Hero with specified id")
+      sender ! heroById.getOrElse(heroId, "Can't find Hero with specified id")
     case ScheduleAttack(time, attack) =>
       val now = DateTime.now()
       if (now.isBefore(time)) {
